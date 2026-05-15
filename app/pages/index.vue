@@ -8,6 +8,8 @@ import type {
 import type { ProviderChartData } from '~/components/IncidentsProviderChart.vue'
 import type { ProviderTimeSource } from '~/components/ProviderTimeSourceToggle.vue'
 
+const MAX_ANALYZE_PAGES = 500
+
 type AnalyzeResponse = {
   meta: {
     eventId: string
@@ -17,6 +19,10 @@ type AnalyzeResponse = {
     timestampTo: string
     messageCount: number
     truncated?: boolean
+    pageMode?: boolean
+    nextCursor?: string | null
+    pageSize?: number
+    payloadNamesFilter?: string[]
   }
   messages: MessageRow[]
   analysis: {
@@ -31,37 +37,111 @@ const providerTimeSource = ref<ProviderTimeSource>('es_timestamp')
 const toast = useToast()
 const analyzeQuery = ref<AnalyzeQuery | null>(null)
 
-const { data, status, error, execute } = useFetch<AnalyzeResponse>(
-  '/api/incidents-extracted/analyze',
-  {
-    query: computed(() =>
-      analyzeQuery.value
-        ? {
-            eventId: analyzeQuery.value.eventId,
-            timestampFrom: normalizeDatetime(analyzeQuery.value.timestampFrom),
-            timestampTo: normalizeDatetime(analyzeQuery.value.timestampTo),
-            environment: analyzeQuery.value.environment,
-            maxResults: analyzeQuery.value.maxResults,
-          }
-        : {},
-    ),
-    immediate: false,
-    watch: false,
-  },
-)
-
-const isModalOpen = ref(false)
-const modalMessage = ref<MessageRow>()
-const modalQuery = ref<PayloadQuery>()
+const data = ref<AnalyzeResponse | null>(null)
+const status = ref<'idle' | 'pending' | 'success' | 'error'>('idle')
+const pagedTruncated = ref(false)
 
 function normalizeDatetime(value: string): string {
   if (value.length === 16) return `${value}:00`
   return value
 }
 
-function onAnalyze(query: AnalyzeQuery) {
+function buildAnalyzeQuery(
+  query: AnalyzeQuery,
+): Record<string, string | number> {
+  const q: Record<string, string | number> = {
+    eventId: query.eventId,
+    timestampFrom: normalizeDatetime(query.timestampFrom),
+    timestampTo: normalizeDatetime(query.timestampTo),
+    environment: query.environment,
+  }
+  const names = query.payloadNames.trim()
+  if (names) q.payloadNames = names
+  return q
+}
+
+async function onAnalyze(query: AnalyzeQuery) {
   analyzeQuery.value = query
-  execute()
+  status.value = 'pending'
+  pagedTruncated.value = false
+  data.value = null
+
+  try {
+    const base = buildAnalyzeQuery(query)
+
+    if (query.usePagedFetch) {
+      const allMessages: MessageRow[] = []
+      const allIncidents: IncidentRow[] = []
+      let cursor: string | undefined
+      let firstMeta: AnalyzeResponse['meta'] | null = null
+
+      for (let page = 0; page < MAX_ANALYZE_PAGES; page++) {
+        const pageQuery: Record<string, string | number> = {
+          ...base,
+          pageSize: query.pageSize,
+        }
+        if (cursor) pageQuery.cursor = cursor
+
+        const res = await $fetch<AnalyzeResponse>(
+          '/api/incidents-extracted/analyze',
+          { query: pageQuery },
+        )
+        if (!firstMeta) firstMeta = res.meta
+        allMessages.push(...res.messages)
+        allIncidents.push(...res.analysis.incidents)
+        cursor = res.meta.nextCursor ?? undefined
+        if (!cursor) break
+      }
+
+      pagedTruncated.value = Boolean(cursor)
+
+      const processed = await $fetch<{ analysis: AnalyzeResponse['analysis'] }>(
+        '/api/incidents-extracted/analyze-process',
+        {
+          method: 'POST',
+          body: {
+            incidents: allIncidents,
+            messagesCount: allMessages.length,
+          },
+        },
+      )
+
+      data.value = {
+        meta: {
+          ...firstMeta!,
+          messageCount: allMessages.length,
+          truncated: pagedTruncated.value,
+          pageMode: false,
+          nextCursor: null,
+        },
+        messages: allMessages,
+        analysis: processed.analysis,
+      }
+    } else {
+      const res = await $fetch<AnalyzeResponse>(
+        '/api/incidents-extracted/analyze',
+        {
+          query: {
+            ...base,
+            maxResults: query.maxResults,
+          },
+        },
+      )
+      data.value = res
+    }
+
+    status.value = 'success'
+  } catch (error) {
+    status.value = 'error'
+    toast.add({
+      title: 'Błąd analizy',
+      description:
+        error instanceof Error
+          ? error.message
+          : 'Nie udało się pobrać danych z Elasticsearch.',
+      color: 'error',
+    })
+  }
 }
 
 function openJsonModal(message: MessageRow) {
@@ -76,23 +156,25 @@ function openJsonModal(message: MessageRow) {
   isModalOpen.value = true
 }
 
-watch(error, (err) => {
-  if (!err) return
-  toast.add({
-    title: 'Błąd analizy',
-    description: err.message || 'Nie udało się pobrać danych z Elasticsearch.',
-    color: 'error',
-  })
-})
-
 const showLargeWarning = computed(
   () => (data.value?.meta.messageCount ?? 0) > 25_000,
 )
+
+const isModalOpen = ref(false)
+const modalMessage = ref<MessageRow>()
+const modalQuery = ref<PayloadQuery>()
 </script>
 
 <template>
   <div class="space-y-6">
     <IncidentsExtractedForm @submit="onAnalyze" />
+
+    <UAlert
+      v-if="pagedTruncated"
+      color="error"
+      title="Przerwano stronicowanie"
+      :description="`Osiągnięto limit ${MAX_ANALYZE_PAGES} stron — dane mogą być niekompletne. Zawęź czas lub zwiększ rozmiar strony.`"
+    />
 
     <UAlert
       v-if="showLargeWarning"
@@ -102,7 +184,7 @@ const showLargeWarning = computed(
     />
 
     <UAlert
-      v-if="data?.meta?.truncated"
+      v-if="data?.meta?.truncated && !pagedTruncated"
       color="error"
       title="Wynik obcięty przez limit wiadomości"
       description="Pobrano tylko pierwsze wiadomości (sortowanie: providerSeq rosnąco). Późniejsze zdarzenia — w tym zmiany wyniku w komunikatach Score (Values) — mogą nie trafić na wykres. Zwiększ „Limit wiadomości z ES” (np. 50 000) i ponów analizę."
@@ -113,6 +195,13 @@ const showLargeWarning = computed(
         Indeks: <code>{{ data.meta.index }}</code> ·
         {{ data.meta.messageCount }} wiadomości
         <span v-if="data.meta.truncated"> (limit osiągnięty)</span>
+        <span
+          v-if="(data.meta.payloadNamesFilter?.length ?? 0) > 0"
+          class="ml-1"
+        >
+          · filtr:
+          <code>{{ data.meta.payloadNamesFilter?.join(', ') }}</code>
+        </span>
       </p>
     </UCard>
 

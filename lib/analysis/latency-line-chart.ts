@@ -1,3 +1,4 @@
+import { providerIdChartLabel } from './provider-labels'
 import type { ProviderChartPoint, TimeSource } from './provider-chart'
 
 const LOG_MIN_SEC = 0.0001
@@ -126,7 +127,7 @@ export function buildLatencyLineChart(
     })
 
     return {
-      label: `P${provider}`,
+      label: providerIdChartLabel(provider),
       data,
       borderColor: COLORS[index % COLORS.length]!,
       backgroundColor: COLORS[index % COLORS.length]!,

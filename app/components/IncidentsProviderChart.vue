@@ -20,6 +20,7 @@ import {
   formatDelayTick,
   LOG_MIN_SEC,
 } from '@lib/analysis/latency-line-chart'
+import { providerIdChartLabel } from '@lib/analysis/provider-labels'
 import {
   summarizeProviderChart,
   type ProviderChartData,
@@ -166,7 +167,9 @@ const chartOptions = computed(() => {
               : ''
             return [
               `${ctx.dataset.label ?? ''}: opóźnienie ${delay}`,
-              col ? `Najszybciej: P${col.winnerProvider}` : '',
+              col
+                ? `Najszybciej: ${providerIdChartLabel(col.winnerProvider)}`
+                : '',
               col ? `Czas ref.: ${when}` : '',
             ].filter(Boolean)
           },
@@ -285,7 +288,7 @@ const chartOptions = computed(() => {
             class="text-sm text-muted"
           >
             Pierwszeństwo (wg grup zdarzeń, wybrane typy):
-            <strong>P{{ fastestProvider.provider }}</strong>
+            <strong>{{ providerIdChartLabel(fastestProvider.provider) }}</strong>
             ({{ fastestProvider.wins }})
             <span class="text-muted">
               · {{ chartPoints.length }} punktów ·

@@ -33,8 +33,8 @@ describe('buildLatencyLineChart', () => {
     expect(model.labels).toEqual(['YellowCard 0:0'])
     expect(model.columns[0]?.winnerProvider).toBe('8')
 
-    const p8 = model.datasets.find((d) => d.label === 'P8')
-    const p253 = model.datasets.find((d) => d.label === 'P253')
+    const p8 = model.datasets.find((d) => d.label === 'Bet365 (8)')
+    const p253 = model.datasets.find((d) => d.label === 'Statscore (253)')
     expect(p8?.data[0]).toBe(LOG_MIN_SEC)
     expect(p253?.data[0]).toBeCloseTo(0.5, 5)
   })
