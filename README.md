@@ -41,10 +41,21 @@ ELASTIC_URL=http://127.0.0.1:9200
 
 Bez Teleportu: `TSH=false` i `ELASTIC_URL` na lokalny klaster / istniejący proxy.
 
+## Wykres providerów
+
+Po analizie meczu widać wykres scatter:
+
+- **oś X** — czas zaraportowania (przełącznik: `@timestamp` z ES albo `Timestamp` / `CreationDate` z payloadu)
+- **oś Y** — provider (`Provider.Id` w payloadzie LSI, fallback: `MessageDocument.provider`)
+- **podsumowanie** — który provider najczęściej zgłasza dany incydent jako pierwszy w grupie (`IncidentType` + `Period` + opcjonalnie `ParticipantPosition`)
+- **filtr typów** — domyślnie kluczowe zdarzenia piłkarskie (bramki, kartki, karne, zmiany, okresy, status meczu); przyciski „Kluczowe (piłka)” / „Wszystkie”
+
+Pole providera odkrywane jest z payloadu (`PRIMARY_PROVIDER_FIELD` = `ProviderId` w `lib/consts.ts`). Przy braku incidentów w payloadzie sprawdź JSON w **Inspect**.
+
 ## Test API (przykład)
 
 ```sh
-curl -s "http://localhost:4201/api/incidents-extracted/analyze?eventId=18664683&timestampFrom=2026-05-13T21:00:00&timestampTo=2026-05-13T22:46:00&environment=production" | jq '.meta, .analysis.summary'
+curl -s "http://localhost:4201/api/incidents-extracted/analyze?eventId=18664683&timestampFrom=2026-05-13T21:00:00&timestampTo=2026-05-13T22:46:00&environment=production" | jq '.meta, .analysis.summary, .analysis.providerChart.summaryEs'
 ```
 
 ## Testy

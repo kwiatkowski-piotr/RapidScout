@@ -1,0 +1,77 @@
+[
+  {
+    "providerSeq": 1001,
+    "reportedAtEs": 1747172405000,
+    "messageProvider": "lsports-prematch",
+    "payload": {
+      "FixtureId": 18664683,
+      "ProviderId": 10030,
+      "Timestamp": 1747172400000,
+      "Livescore": {
+        "Periods": [
+          {
+            "Type": 1,
+            "Incidents": [
+              {
+                "Period": 1,
+                "IncidentType": 27,
+                "Seconds": 120,
+                "ParticipantPosition": "1"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "providerSeq": 1002,
+    "reportedAtEs": 1747172400000,
+    "messageProvider": "lsports-inplay",
+    "payload": {
+      "FixtureId": 18664683,
+      "ProviderId": 75,
+      "Timestamp": 1747172399000,
+      "Livescore": {
+        "Periods": [
+          {
+            "Type": 1,
+            "Incidents": [
+              {
+                "Period": 1,
+                "IncidentType": 27,
+                "Seconds": 118,
+                "ParticipantPosition": "1"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "providerSeq": 1003,
+    "reportedAtEs": 1747172410000,
+    "messageProvider": "lsports-prematch",
+    "payload": {
+      "FixtureId": 18664683,
+      "ProviderId": 10030,
+      "Timestamp": 1747172409000,
+      "Livescore": {
+        "Periods": [
+          {
+            "Type": 1,
+            "Incidents": [
+              {
+                "Period": 2,
+                "IncidentType": 5,
+                "Seconds": 600,
+                "ParticipantPosition": "2"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+]

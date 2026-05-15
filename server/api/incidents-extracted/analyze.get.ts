@@ -8,8 +8,9 @@ import {
   INCIDENTS_EXTRACTED_TOPIC,
 } from '@lib/consts'
 import { getIncidentsExtractedMessages } from '@lib/elasticsearch/incidents-extracted-messages'
+import { buildProviderChart } from '@lib/analysis/provider-chart'
 import {
-  extractIncidentsFromPayload,
+  extractIncidentsWithContext,
   summarizeIncidentTypes,
 } from '@lib/elasticsearch/incidents-payload.parser'
 import type { MessageDocument } from '@lib/types/message-document'
@@ -113,7 +114,12 @@ export default defineEventHandler(async (event) => {
   const incidents = hits.flatMap((hit) => {
     const source = hit._source as MessageDocument
     const payload = parseRawPayload(source.rawPayload)
-    return extractIncidentsFromPayload(payload, source.providerSeq)
+    return extractIncidentsWithContext(payload, {
+      messageProviderSeq: source.providerSeq,
+      reportedAtEs: source['@timestamp'],
+      messageProvider: source.provider,
+      headers: source.headers,
+    })
   })
 
   incidents.sort((a, b) => {
@@ -140,6 +146,7 @@ export default defineEventHandler(async (event) => {
         incidentsCount: incidents.length,
         incidentTypes: summarizeIncidentTypes(incidents),
       },
+      providerChart: buildProviderChart(incidents),
     },
   }
 })

@@ -5,6 +5,8 @@ import type {
   AnalysisSummary,
   IncidentRow,
 } from '~/components/IncidentsTimelineTable.vue'
+import type { ProviderChartData } from '~/components/IncidentsProviderChart.vue'
+import type { ProviderTimeSource } from '~/components/ProviderTimeSourceToggle.vue'
 
 type AnalyzeResponse = {
   meta: {
@@ -20,8 +22,11 @@ type AnalyzeResponse = {
   analysis: {
     incidents: IncidentRow[]
     summary: AnalysisSummary
+    providerChart?: ProviderChartData
   }
 }
+
+const providerTimeSource = ref<ProviderTimeSource>('es_timestamp')
 
 const toast = useToast()
 const analyzeQuery = ref<AnalyzeQuery | null>(null)
@@ -102,6 +107,18 @@ const showLargeWarning = computed(
         <span v-if="data.meta.truncated"> (limit osiągnięty)</span>
       </p>
     </UCard>
+
+    <ClientOnly>
+      <IncidentsProviderChart
+        :chart="data?.analysis.providerChart"
+        :time-source="providerTimeSource"
+        :loading="status === 'pending'"
+      >
+        <template #toggle>
+          <ProviderTimeSourceToggle v-model="providerTimeSource" />
+        </template>
+      </IncidentsProviderChart>
+    </ClientOnly>
 
     <IncidentsMessagesTable
       :messages="data?.messages ?? []"

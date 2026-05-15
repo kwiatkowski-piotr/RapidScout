@@ -1,0 +1,16 @@
+{
+  "providerSeq": 2145929972,
+  "reportedAtEs": 1747167622873,
+  "messageProvider": "lsports-kafka",
+  "payload": {
+    "ProviderEventMessageId": "a0811ab5-3553-4c62-902e-bbb6e8db43a9",
+    "MessageId": "03b49c14-fa85-4752-9684-62e97e440708",
+    "Timestamp": "2026-05-13T19:00:22.8739578Z",
+    "Id": 27,
+    "Name": "Score",
+    "Kind": "Score",
+    "Provider": { "Id": 253 },
+    "Period": { "Id": 2, "Name": "1st Half", "DisplayId": 10 },
+    "Fixture": { "Id": 18664683 }
+  }
+}
