@@ -10,7 +10,10 @@ export type AnalyzeQuery = {
   timestampFrom: string
   timestampTo: string
   environment: 'beta' | 'production'
+  maxResults: number
 }
+
+import { HARD_MAX_RESULTS } from '@lib/consts'
 
 const schema = z
   .object({
@@ -18,6 +21,11 @@ const schema = z
     timestampFrom: z.string().min(1, 'Start time is required'),
     timestampTo: z.string().min(1, 'End time is required'),
     environment: z.enum(['beta', 'production']),
+    maxResults: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(HARD_MAX_RESULTS),
   })
   .refine((data) => data.timestampTo > data.timestampFrom, {
     message: 'End must be after start',
@@ -29,6 +37,7 @@ const state = reactive({
   timestampFrom: '2026-05-13T21:00',
   timestampTo: '2026-05-13T22:46',
   environment: 'production' as 'beta' | 'production',
+  maxResults: 50_000,
 })
 
 const errors = ref<string | null>(null)
@@ -61,6 +70,20 @@ function onSubmit() {
 
       <UFormField label="Do">
         <UInput v-model="state.timestampTo" type="datetime-local" />
+      </UFormField>
+
+      <UFormField
+        label="Limit wiadomości z ES"
+        description="Rosnąco wg providerSeq. Bramki w polu Score pojawiają się często dopiero po dziesiątkach tysięcy wiadomości — przy obcięciu wykres może pokazywać tylko 0:0."
+        class="sm:col-span-2"
+      >
+        <UInput
+          v-model.number="state.maxResults"
+          type="number"
+          :min="1000"
+          :max="HARD_MAX_RESULTS"
+          step="1000"
+        />
       </UFormField>
 
       <UFormField label="Środowisko" class="sm:col-span-2">

@@ -5,7 +5,7 @@ export const INCIDENTS_EXTRACTED_TOPIC =
 
 export const LSPORTS_KAFKA_PROVIDER = 'lsports-kafka'
 
-export const DEFAULT_MAX_RESULTS = 10_000
+export const DEFAULT_MAX_RESULTS = 30_000
 export const HARD_MAX_RESULTS = 50_000
 export const ES_PAGE_SIZE = 1000
 export const ES_REQUEST_TIMEOUT_MS = 30_000

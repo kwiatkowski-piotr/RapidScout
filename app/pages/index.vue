@@ -41,6 +41,7 @@ const { data, status, error, execute } = useFetch<AnalyzeResponse>(
             timestampFrom: normalizeDatetime(analyzeQuery.value.timestampFrom),
             timestampTo: normalizeDatetime(analyzeQuery.value.timestampTo),
             environment: analyzeQuery.value.environment,
+            maxResults: analyzeQuery.value.maxResults,
           }
         : {},
     ),
@@ -85,7 +86,7 @@ watch(error, (err) => {
 })
 
 const showLargeWarning = computed(
-  () => (data.value?.meta.messageCount ?? 0) > 10_000,
+  () => (data.value?.meta.messageCount ?? 0) > 25_000,
 )
 </script>
 
@@ -97,7 +98,14 @@ const showLargeWarning = computed(
       v-if="showLargeWarning"
       color="warning"
       title="Duży wynik"
-      description="Pobrano ponad 10 000 wiadomości. Rozważ zwężenie przedziału czasu."
+      description="Pobrano ponad 25 000 wiadomości. Zapytanie może być wolne — rozważ zwężenie przedziału czasu lub mniejszy limit."
+    />
+
+    <UAlert
+      v-if="data?.meta?.truncated"
+      color="error"
+      title="Wynik obcięty przez limit wiadomości"
+      description="Pobrano tylko pierwsze wiadomości (sortowanie: providerSeq rosnąco). Późniejsze zdarzenia — w tym zmiany wyniku w komunikatach Score (Values) — mogą nie trafić na wykres. Zwiększ „Limit wiadomości z ES” (np. 50 000) i ponów analizę."
     />
 
     <UCard v-if="data?.meta">
