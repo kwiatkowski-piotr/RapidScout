@@ -44,6 +44,7 @@ Bez Teleportu: `TSH=false` i `ELASTIC_URL` na lokalny klaster / istniejący prox
 ## Wykres opóźnień providerów
 
 - **oś X** — zdarzenia (np. `Score` + wynik z `Values`, np. `0:1`); grupowanie po czasie meczu.
+- **Grupowanie LSI (kartki itd.)** — kubełek `Kind`+`Name`+`Period`+`Id`, potem **łańcuch w czasie ES** z tolerancją `INCIDENT_TIME_CLUSTER_GAP_MS` (**12 s**); szczegóły i uzasadnienie: [`docs/SPEC.md`](docs/SPEC.md).
 - **oś Y** — opóźnienie względem najszybszego providera, **skala log**.
 - **Limit ES** — wiadomości są brane **rosnąco po `providerSeq`**. Dla intensywnych meczów pierwsze dziesiątki tysięcy rekordów to często statystyki graczy; **pierwsza zmiana wyniku w `Score`** może być dopiero po ~15–20 tys. wiadomościach. Ustaw w formularzu **Limit wiadomości z ES** (domyślnie 50 000, max 50 000) i upewnij się, że nie ma czerwonego alertu o obcięciu wyniku.
 - **Filtry typów** — m.in. `Score`, `Player Goals`, typowe typy bramek; szybkie filtry po `Name`.

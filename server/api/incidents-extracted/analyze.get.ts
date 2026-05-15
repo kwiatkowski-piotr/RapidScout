@@ -6,7 +6,9 @@ import {
   DEFAULT_MAX_RESULTS,
   HARD_MAX_RESULTS,
   INCIDENTS_EXTRACTED_TOPIC,
+  INCIDENT_TIME_CLUSTER_GAP_MS,
 } from '@lib/consts'
+import { applyIncidentTimeClustering } from '@lib/analysis/incident-time-cluster'
 import { getIncidentsExtractedMessages } from '@lib/elasticsearch/incidents-extracted-messages'
 import { buildProviderChart } from '@lib/analysis/provider-chart'
 import {
@@ -121,6 +123,8 @@ export default defineEventHandler(async (event) => {
       headers: source.headers,
     })
   })
+
+  applyIncidentTimeClustering(incidents, INCIDENT_TIME_CLUSTER_GAP_MS)
 
   incidents.sort((a, b) => {
     const seqDiff = a.messageProviderSeq - b.messageProviderSeq

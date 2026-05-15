@@ -10,6 +10,20 @@ export const HARD_MAX_RESULTS = 50_000
 export const ES_PAGE_SIZE = 1000
 export const ES_REQUEST_TIMEOUT_MS = 30_000
 
+/**
+ * Maks. odstęp (ms) między kolejnymi wiadomościami w tym samym kubełku
+ * (`Kind` + `Name` + `Period` + `Id`), żeby nadal liczyły się jako **jeden** incydent
+ * (np. ten sam żółty kartka u różnych providerów).
+ *
+ * **Kalibracja (event 18664683, 2026-05-13, próbka ~20k wiadomości):** między
+ * kolejnymi komunikatami `YellowCard` w czasie ES pojedynczy odstęp rzędu **~40 s**
+ * — interpretujemy to jako **osobne** zdarzenia na boisku. Opóźnienia między
+ * providerami dla tej samej aktualizacji bywają rzędu setek ms–kilku sekund;
+ * **12 s** daje zapas na wolniejsze feedy i wciąż jest znacznie poniżej typowego
+ * odstępu między dwiema kartkami w tym meczu.
+ */
+export const INCIDENT_TIME_CLUSTER_GAP_MS = 12_000
+
 export type Environment = 'beta' | 'production'
 
 export function buildLsportsKafkaIndex(environment: Environment): string {
