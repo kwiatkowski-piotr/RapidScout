@@ -1,0 +1,15 @@
+services:
+  rapidscout:
+    build: .
+    ports:
+      - "${RAPIDSCOUT_PORT:-4201}:3000"
+    environment:
+      TSH: "${TSH:-false}"
+      ELASTIC_URL: "${ELASTIC_URL:-http://host.docker.internal:9200}"
+      TELEPORT_PROXY: "${TELEPORT_PROXY:-teleport.statscore.com}"
+      TELEPORT_APP: "${TELEPORT_APP:-es-feed-saver}"
+      PORT: "3000"
+      HOST: "0.0.0.0"
+    # Linux: dostęp do ES / tsh proxy na hoście (Docker 20.10+)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
